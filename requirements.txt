@@ -6,3 +6,4 @@ cryptography
 python-jose
 pyjwt
 cryptography
+jwcrypto
