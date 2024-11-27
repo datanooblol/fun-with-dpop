@@ -2,12 +2,12 @@ from jwcrypto import jwk
 from cryptography.hazmat.primitives.serialization import load_pem_public_key, load_pem_private_key
 from cryptography.hazmat.primitives.serialization import PrivateFormat, PublicFormat, NoEncryption, Encoding
 import base64
-import uuid
+from package.database_management import token_store
 import json
 from jose import jwt, JWSError, JWTError, ExpiredSignatureError
 import hashlib
 from fastapi import HTTPException
-from datetime import datetime, timedelta
+import time
 
 class JWTBase:
     """
@@ -114,7 +114,7 @@ class ServerJWTManagement(JWTBase):
         claims = {
             "iat": iat,
             "exp": exp,
-            "jti": jti
+            "jti": jti,
         }
         claims.update(**data)
         return jwt.encode(
@@ -124,7 +124,7 @@ class ServerJWTManagement(JWTBase):
 class JWTValidation(JWTBase):
     def __init__(self,):
         super().__init__()
-
+        self.status_code = {"dpop": 400, "access token": 401, "refresh token": 403}
     def verify_token(self, token:str, key:bytes, token_type:str, **kwargs):
         try:
             # Attempt to decode and verify the JWT signature
@@ -139,7 +139,7 @@ class JWTValidation(JWTBase):
         # Handle specific exceptions in order of priority
         except ExpiredSignatureError as e:
             # print("Error: The JWT has expired.")
-            raise HTTPException(status_code=401, detail=f"Error: {token_type} has expired. {e}")
+            raise HTTPException(status_code=401, detail=f"{token_type} error: {e}")
         except JWSError as e:
             # print(f"Error: JWS error occurred. {e}")
             raise HTTPException(status_code=400, detail=f"Error: JWS error occurred. {e}")
@@ -159,17 +159,19 @@ class JWTValidation(JWTBase):
         if headers['typ']!="dpop+jwt":
             raise HTTPException(status_code=400, detail="typ mismatched")
 
-    def verify_dpop_payload(self, payload:dict, )->None:
-        if "jti" not in payload:
+    def verify_dpop_claims(self, claims:dict, )->None:
+        if "jti" not in claims:
             raise HTTPException(status_code=400, detail="jti missing.")
-        if "htu" not in payload:
+        if "htu" not in claims:
             raise HTTPException(status_code=400, detail="endpoint missing.")
-        if "htm" not in payload:
+        if "htm" not in claims:
             raise HTTPException(status_code=400, detail="method missing.")
-        if "iat" not in payload:
+        if "iat" not in claims:
             raise HTTPException(status_code=400, detail="issued at missing.")
-        if "exp" not in payload:
+        if "exp" not in claims:
             raise HTTPException(status_code=400, detail="expired at missing.")
+        if "client_id" not in claims:
+            raise HTTPException(status_code=400, detail="client_id missing.")
         
     def verify_dpop_signature(self, signature:str):
         headers, _, _ = signature.split(".")
@@ -177,6 +179,44 @@ class JWTValidation(JWTBase):
         public_jwk = headers['jwk']
         public_key = self.convert_public_jwk_to_pem(public_jwk)
         return self.verify_token(token=signature, key=public_key, token_type="DPoP Proof JWT", options={"verify_exp": True})
+    
+    def token_is_tampered(self, token, key):
+        try:
+            claims = jwt.decode(
+                token=token,
+                key=key,
+                algorithms=self.algorithm,
+                options={"verify_exp": False}
+            )
+            return False
+        except Exception as e:
+            return True
+
+    def dpop_is_replayed(self, table, jti):
+        query = f"SELECT * FROM {table} WHERE jti=='{jti}'"
+        df = token_store.query(query)
+        if df.shape[0]>0:
+            return True
+        return False
+
+    def token_is_replayed(self, table, jti, token, client_id):
+        query = f"SELECT * FROM {table} WHERE jti=='{jti}' AND token=='{token}' AND client_id=='{client_id}' AND active=={False};"
+        df = token_store.query(query)
+        if df.shape[0]>0:
+            return True
+        return False
+
+    def token_is_expired(self, exp):
+        if exp < int(time.time()):
+            return True
+        return False
+    
+    def token_not_exist(self, table, jti, token, client_id, exp):
+        query = f"SELECT * FROM {table} WHERE jti=='{jti}' AND token=='{token}' AND client_id=='{client_id}' AND exp=={exp} AND active=={True};"
+        df = token_store.query(query)
+        if df.shape[0]==0:
+            return True
+        return False
 
 
 

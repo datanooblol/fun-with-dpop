@@ -6,15 +6,17 @@ from pydantic import BaseModel
 
 class BaseFormat(BaseModel):
     jti:str
-    client_id:str
+
 
 class DPoPFormat(BaseFormat):
     pass
 
 class TokenFormat(BaseFormat):
     token: str
+    client_id:str
     exp: int
     active: bool
+    remark: str
 
 class BaseDuckDB:
     def __init__(self, db_path:str):
@@ -75,9 +77,9 @@ class DBManagement(BaseDuckDB):
     def __init__(self, db_path):
         super().__init__(db_path)
 
-    def add_jti(self, table:str, jti:str, token:str=None, client_id:str=None, exp:int=None, active:bool=None):
+    def add_jti(self, table:str, jti:str, token:str=None, client_id:str=None, exp:int=None, active:bool=None, remark:str=None):
         data = []
-        for d in [jti, token, client_id, exp, active]:
+        for d in [jti, token, client_id, exp, active, remark]:
             if d is not None:
                 data.append(d)
         self.add_data(table, [data])
@@ -97,8 +99,12 @@ class DBManagement(BaseDuckDB):
         data = (jti, client_id)
         self.execute(query, data)
 
-    def add_token(self, table:str, jti:str, token:str, client_id:str, exp:int, active:bool):
-        self.add_jti(table=table, jti=jti, token=token, client_id=client_id, exp=exp, active=active)
+    def add_token(self, table:str, jti:str, token:str, client_id:str, exp:int, active:bool, remark:str):
+        self.add_jti(table=table, jti=jti, token=token, client_id=client_id, exp=exp, active=active, remark=remark)
+
+    def disable_token(self, table, client_id):
+        query = f"UPDATE {table} SET active = ?, remark = ? WHERE client_id=='{client_id}';"
+        self.execute(query, [False, "disable"])
 
     def dpop_is_unique(self, table:str, jti:str):
         query = f"SELECT jti FROM {table} WHERE jti=='{jti}';"
