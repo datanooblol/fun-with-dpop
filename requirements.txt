@@ -7,3 +7,6 @@ python-jose
 pyjwt
 cryptography
 jwcrypto
+sqlmodel
+duckdb-engine
+# duckdb

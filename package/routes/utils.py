@@ -82,10 +82,10 @@ def extract_dpop_proof(request: Request):
     validator.verify_dpop_claims(claims)
     
     jti = claims.get("jti", None)
-    # client_id = claims.get("client_id", None)
+
     if validator.dpop_is_replayed(table=config.DPOP_PROOF_JTI, jti=jti):
         raise HTTPException(status_code=400, detail="DPoP Replay detected.")
-    # query = f"INSERT INTO {config.DPOP_PROOF_JTI} VALUES ('?');"
+
     token_store.add_jti(table=config.DPOP_PROOF_JTI, jti=jti)
 
     return DPoPFormat(**{"headers":headers, "payload": claims})
@@ -138,9 +138,6 @@ def validate_token(request: Request, token_type:dict):
         data = ["replayed"]
         handle_invalid_token(queries, data, token_type)
 
-    if validator.token_not_exist(table=config.ACCESS_TOKEN_JTI if token_type=="access token" else config.REFRESH_TOKEN_JTI, jti=jti, token=token, client_id=client_id, exp=exp):
-        raise HTTPException(status_code=400, detail=f"{token_type} inexist.")
-
     if validator.token_is_expired(exp=exp):
         queries = [
             f"UPDATE {config.REFRESH_TOKEN_JTI} SET active = ?, remark = ? WHERE jti=='{jti}' AND token=='{token}' AND client_id=='{client_id}';",
@@ -148,6 +145,9 @@ def validate_token(request: Request, token_type:dict):
         ]
         data = [False, "expired"]
         handle_invalid_token(queries, data, token_type)
+
+    if validator.token_not_exist(table=config.ACCESS_TOKEN_JTI if token_type=="access token" else config.REFRESH_TOKEN_JTI, jti=jti, token=token, client_id=client_id, exp=exp):
+        raise HTTPException(status_code=400, detail=f"{token_type} inexist.")
 
     return token
 
