@@ -1,7 +1,6 @@
 import duckdb
 from contextlib import contextmanager
-from typing import Any
-
+import re
 # Context Manager for DuckDB Connection
 @contextmanager
 def duck_connection(database:str):
@@ -12,3 +11,7 @@ def duck_connection(database:str):
         yield conn  # Yield the connection for usage
     finally:
         conn.close()  # Ensure the connection is closed after use
+
+def remove_escape_characters(text:str)->str:
+    pattern = r"[;]"
+    return re.sub(pattern, "", text)

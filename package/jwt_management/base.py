@@ -63,17 +63,20 @@ class JWTBase:
         jwk_dict = jwk_key.export(as_dict=True)
         return jwk_dict
 
+from package.data_models.Types import ClientHeaders, ClientPayload
+
 class ClientJWTManagement(JWTBase):
     def __init__(self):
         super().__init__()
     
     def create_headers(self, public_key:bytes):
         public_key_jwk = self.convert_pem_to_jwk(public_key)
-        headers = {
-            "typ": "dpop+jwt",
-            "alg": "RS256",
-            "jwk": public_key_jwk
-        }
+        # headers = {
+        #     "typ": "dpop+jwt",
+        #     "alg": "RS256",
+        #     "jwk": public_key_jwk
+        # }
+        headers = ClientHeaders(jwk=public_key_jwk)
         return headers
     
     def create_payload(self, jti:str, iat:int, exp:int, method:str, uri:str, data:dict):
