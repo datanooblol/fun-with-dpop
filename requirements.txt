@@ -9,4 +9,6 @@ cryptography
 jwcrypto
 sqlmodel
 duckdb-engine
-# duckdb
+duckdb
+pytest
+httpx

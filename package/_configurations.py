@@ -1,0 +1,1 @@
+db_path = './db/token_store.db'

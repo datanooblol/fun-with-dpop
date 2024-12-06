@@ -1,71 +1,66 @@
+from package.ezorm.variables import EzORM
+from typing import List, Type, Tuple, Dict, Union
 from package.ezorm.utils import remove_escape_characters
-from package.ezorm.utils import duck_connection
-from package.ezorm import DATABASE
-from typing import List, Dict, Any, Type
-from package.ezorm import EzORM
+import json
+from package.ezorm.configuration import settings
+import pandas as pd
 from package.ezorm.validation import isinstance_ezorm
+from fastapi import HTTPException
 
-def execute(query:str, data:list=[], response=False):
-    with duck_connection(database=DATABASE) as con:
-        records = con.execute(query, data).df()
-    if response==True:
-        return records
+def clean_and_execute(query:str, data:list=[])->pd.DataFrame:
+    query = remove_escape_characters(query)
+    data = remove_escape_characters(json.dumps(data))
+    data = json.loads(data)
+    return settings.engine(query+";", data)
 
-def create_tbl_query(table:Type[EzORM])->str:
-    isinstance_ezorm(table)
-    data_types = {
-        str: "TEXT",    # or "TEXT" for unlimited length
-        int: "INTEGER",
-        float: "FLOAT",    # or "REAL" depending on the database
-        bool: "BOOLEAN",
-        # "datetime": "DATETIME"  # Use "TIMESTAMP" for PostgreSQL
-    }
+def get_table_and_schemas(model:Type[EzORM])->Tuple[str, Dict[str, Union[str, int, bool]]]:
+    isinstance_ezorm(model)
+    table = model.__table__
+    schemas = model.model_dump()
+    return table, schemas
 
-    query = []
+def get_condition_and_data(schemas:dict)->Tuple[List[str], List[Union[str, int, bool]]]:
+    condition = []
+    data = []
+    for field, value in schemas.items():
+        if value is not None:
+            condition.append(f"{field}=?")
+            data.append(value)
+    return condition, data
 
-    for field, detail in table.model_fields.items():
-        proxy = []
-        proxy.append(f"""{field} {data_types[detail.annotation]}""")
-        is_required = detail.is_required()
-        
-        if is_required:
-            proxy.append(f"""NOT NULL""")
-        else:
-            default = detail.default
-            if (default is not None) and (default != ""):
-                if isinstance(detail.default, bool):
-                    proxy.append(f"""DEFAULT {str(default).upper()}""")
-                elif isinstance(detail.default, str):
-                    proxy.append(f"""DEFAULT '{default}'""")
-                else:
-                    # print("default", type(default), default)
-                    proxy.append(f"""DEFAULT {default}""")
-                    
-        query.append(" ".join(proxy))
+def Create(model:Type[EzORM])->pd.DataFrame:
+    table, schemas = get_table_and_schemas(model)
+    if Read(model).shape[0]!=0:
+        raise HTTPException(status_code=400, detail="Record already exists")
+    query = f"INSERT INTO {table} VALUES ({', '.join(['?' for i in range(len(schemas))])})"
+    data = [value for value in schemas.values()]
+    return clean_and_execute(query, data)
 
-    query = ", ".join(query)
-    query = remove_escape_characters(query).strip()
+def Read(model:Type[EzORM])->pd.DataFrame:
+    table, schemas = get_table_and_schemas(model)
+    where, data = get_condition_and_data(schemas)
+    query = f"SELECT * FROM {table}"
+    if len(where)>0:
+        where = " AND ".join(where)
+        query = f"{query} WHERE {where}"
+    return clean_and_execute(query, data)
 
-    QUERY = f"""CREATE TABLE IF NOT EXISTS {table.__table__} ( {query} );"""
-    return QUERY
+def Update(existing:Type[EzORM], new:Type[EzORM])->pd.DataFrame:
+    e_table, e_schemas = get_table_and_schemas(existing)
+    n_table, n_schemas = get_table_and_schemas(new)
+    if e_table != n_table:
+        raise ValueError("table not matched")
+    e_where, e_data = get_condition_and_data(e_schemas)
+    e_where = " AND ".join(e_where)
+    n_set, n_data = get_condition_and_data(n_schemas)
+    n_set = ", ".join(n_set)
+    query = f"UPDATE {n_table} SET {n_set} WHERE {e_where}"
+    data = n_data + e_data
+    return clean_and_execute(query, data)
 
-def delete_tbl_query(table:Type[EzORM])->str:
-    isinstance_ezorm(table)
-    QUERY = f"""DROP TABLE IF EXISTS {table.__table__};"""
-    return QUERY
-
-def create_tables(tables:List[EzORM]):
-    for table in tables:
-        query = create_tbl_query(table)
-        print(query)
-        execute(query, [])
-        print(f"Model: {table.__table__} created successfully")
-    print("All tables created successfully")
-
-def delete_tables(tables:List[EzORM]):
-    for table in tables:
-        query = delete_tbl_query(table)
-        print(query)
-        execute(query, [])
-        print(f"Model: {table.__table__} deleted successfully")
-    print("All tables deleted successfully")
+def Delete(model:Type[EzORM])->pd.DataFrame:
+    table, schemas = get_table_and_schemas(model)
+    where, data = get_condition_and_data(schemas)
+    where = " AND ".join(where)
+    query = f"DELETE FROM {table} WHERE {where}"
+    return clean_and_execute(query, data)

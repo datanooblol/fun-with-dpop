@@ -1,6 +1,10 @@
-from package.ezorm import EzORM
-from typing import Type, Any
+from package.ezorm.variables import EzORM
+from typing import Type
 
-def isinstance_ezorm(any:Type[Any]):
-    if not issubclass(any, EzORM):
-        raise ValueError(f"Expected a subclass of EzORM, but got {type(any)}")
+def isinstance_ezorm(obj:Type[EzORM]):
+    if not isinstance(obj, EzORM):
+        raise ValueError(f"Expected a subclass of EzORM, but got {obj}")
+    
+def issubclass_ezorm(obj:Type[EzORM]):
+    if not issubclass(obj, EzORM):
+        raise ValueError(f"Expected a subclass of EzORM, but got {obj}")
