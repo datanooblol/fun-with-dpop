@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from package.validation.access_token_validation import validate_access_token_headers, verify_access_token
 # from package.routes.utils import extract_dpop_proof, validate_claims, validate_access_token, DPoPFormat
 # from package.jwt_management import ServerJWTManagement
 
@@ -9,9 +10,12 @@ router = APIRouter(
     tags=["resource"],   # Group routes for documentation purposes
 )
 
-@router.get("/history")
-async def get_history():
-    return {"response": "history"}
+@router.get("/protected")
+async def get_history(
+    header_is_valid=Depends(validate_access_token_headers),
+    access_token_is_valid=Depends(verify_access_token)
+):
+    return {"response": "access token is valid"}
 
 # # Define endpoints
 # @router.get("/history")

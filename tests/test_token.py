@@ -1,7 +1,7 @@
 import pytest
 import time
 from tests.conftest import sign_signature
-
+import uuid
 def test_dpop_missing(
     client, 
 ):
@@ -12,31 +12,30 @@ def test_dpop_missing(
     assert response.json() == {"detail": "DPoP missing from request headers."}
 
 @pytest.mark.parametrize(
-        'exp, sleep, scenario',
+        'scenario, exp',
         [
-            (0, 2, 'expired'),
-            (15, 0, 'tampered')
+            ('expired', -1),
+            ('tampered', 15)
         ]
 )
-def test_verify_client_signature(client, client_keys, exp, sleep, scenario):
+def test_verify_client_signature(client, client_keys, scenario, exp):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
-        jti="555",
+        jti=str(uuid.uuid4()),
         iat=iat,
         exp=iat+exp,
         htm="GET",
         htu="/authorizer/token",
         client_id="555"
     )
-    time.sleep(sleep)
     if scenario=='expired':
         status_code = 400
         expected_response = {"detail": "Unexpected error: Signature has expired."}
     if scenario=='tampered':
         tampered_sig, tampered_signature = sign_signature(
             client_keys=client_keys,
-            jti="666",
+            jti=str(uuid.uuid4()),
             iat=iat,
             exp=iat+exp,
             htm="GET",

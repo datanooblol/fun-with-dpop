@@ -1,6 +1,7 @@
 import pytest
 import time
 from tests.conftest import sign_signature
+import uuid
 
 @pytest.mark.parametrize(
         'scenario, htm, htu',
@@ -11,11 +12,11 @@ from tests.conftest import sign_signature
             ('htm_htu_mismatched', 'POST', '/authorizer/token1'),
         ]
 )
-def test_validate_method_endpoint(client, client_keys, scenario, htm, htu):
+def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
-        jti="555",
+        jti=str(uuid.uuid4()),
         iat=iat,
         exp=iat+15,
         htm=htm,
@@ -52,7 +53,7 @@ def test_validate_method_endpoint(client, client_keys, scenario, htm, htu):
             ("client_id", True, True, True, True, True, False),
         ]
 )
-def test_validate_client_missing_claims(
+def test_claims_missing(
     client, client_keys,
     scenario, jti, iat, exp, htm, htu, client_id
 ):
@@ -60,7 +61,7 @@ def test_validate_client_missing_claims(
     
     c_sig, signature = sign_signature(
         client_keys=client_keys,
-        jti="555" if jti==True else None,
+        jti=str(uuid.uuid4()) if jti==True else None,
         iat=_iat if iat==True else None,
         exp=_iat+15 if exp==True else None,
         htm="GET" if htm==True else None,

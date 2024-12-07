@@ -1,32 +1,32 @@
-import time
-import uuid
-from package.jwt_management.data_models.server_models import ServerSignature, JKT
+# import time
+# import uuid
+# from package.jwt_management.data_models.server_models import ServerSignature, JKT
 
-ACCESS_TOKEN_LIVE = 60*10 # 1 hour
-REFRESH_TOKEN_LIVE = (60*60)*24 # 1 day
+# ACCESS_TOKEN_LIVE = 60*10 # 1 hour
+# REFRESH_TOKEN_LIVE = (60*60)*24 # 1 day
 
-def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes):
-    iat = int(time.time())
-    jti = str(uuid.uuid4())
-    access_token = ServerSignature(
-        jti=jti, 
-        iat=iat, 
-        exp=iat+ACCESS_TOKEN_LIVE, 
-        client_id=client_id, 
-        cnf=JKT(jkt=thumbprint)
-    ).sign(key=private_key)
-    refresh_token = ServerSignature(
-        jti=jti, 
-        iat=iat, 
-        exp=iat+REFRESH_TOKEN_LIVE, 
-        client_id=client_id, 
-    ).sign(key=private_key)
-    return {
-        "access_token": access_token,
-        "token_type": "DPoP",
-        "exp": iat+ACCESS_TOKEN_LIVE,
-        "refresh_token": refresh_token
-    }
+# def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes):
+#     iat = int(time.time())
+#     jti = str(uuid.uuid4())
+#     access_token = ServerSignature(
+#         jti=jti, 
+#         iat=iat, 
+#         exp=iat+ACCESS_TOKEN_LIVE, 
+#         client_id=client_id, 
+#         cnf=JKT(jkt=thumbprint)
+#     ).sign(key=private_key)
+#     refresh_token = ServerSignature(
+#         jti=jti, 
+#         iat=iat, 
+#         exp=iat+REFRESH_TOKEN_LIVE, 
+#         client_id=client_id, 
+#     ).sign(key=private_key)
+#     return {
+#         "access_token": access_token,
+#         "token_type": "DPoP",
+#         "exp": iat+ACCESS_TOKEN_LIVE,
+#         "refresh_token": refresh_token
+#     }
 
 # from package.jwt_management import ServerJWTManagement, JWTValidation
 # from fastapi import HTTPException, Request
@@ -38,8 +38,15 @@ def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes):
 # import uuid
 # import time
 
-# def get_server_public_key():
-#     return requests.get("http://localhost:8000/authorizer/public-key",).json()
+import requests
+from package import skm, BASE_URL
+from package.jwt_management.data_models.base_models import JWK
+
+def get_server_public_key():
+    try:
+        return requests.get(f"{BASE_URL}/authorizer/public-key",).json()
+    except:
+        return JWK.from_key(key=skm.load_public_key_from_pem()).model_dump()
 
 # def get_jwt_management():
 #     return ServerJWTManagement()

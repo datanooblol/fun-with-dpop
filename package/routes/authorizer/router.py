@@ -1,15 +1,17 @@
 from fastapi import APIRouter
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 # from package.jwt_management import ServerJWTManagement, JWTValidation
-from package.keypair_management import KeyPairManagement
 # from package.routes.utils import get_jwt_management, extract_dpop_proof, validate_claims, DPoPFormat, validate_refresh_token, get_tokens
 from package.validation.dpop_validation import validate_dop_request
 from package.jwt_management.data_models.client_models import ClientSignature
-from package.routes.utils import server_generate_tokens
+from package.routes.authorizer.utils import server_generate_tokens
+from package import skm
+from package.jwt_management.data_models.base_models import JWK
 
-directory = './server_keypair'
-skm = KeyPairManagement(directory=directory)
 skm.generate_keypairs()
+
+ACCESS_TOKEN_LIVE = 60*10 # 1 hour
+REFRESH_TOKEN_LIVE = (60*60)*24 # 1 day
 
 # # Initialize the router
 router = APIRouter(
@@ -27,7 +29,13 @@ async def get_token(
     dpop.claims.validate_method_endpoint(method="GET", endpoint="/authorizer/token")
     client_public_thumbprint = dpop.headers.jwk.to_thumbprint()
     client_id = dpop.claims.client_id
-    return server_generate_tokens(client_id=client_id, thumbprint=client_public_thumbprint, private_key=skm.load_private_key_from_pem())
+    return server_generate_tokens(
+        client_id=client_id, 
+        thumbprint=client_public_thumbprint, 
+        private_key=skm.load_private_key_from_pem(), 
+        ACCESS_TOKEN_LIVE=ACCESS_TOKEN_LIVE, 
+        REFRESH_TOKEN_LIVE=REFRESH_TOKEN_LIVE
+    )
     
 # @router.get("/token")
 # async def get_token(
@@ -54,7 +62,7 @@ async def get_token(
 #     return_tokens = get_tokens(client_id, thumbprint, km.load_private_key_from_pem())
 #     return return_tokens
 
-# @router.get("/public-key")
-# async def show_public_key(server: ServerJWTManagement=Depends(get_jwt_management)):
-#     public_key_jwk = server.convert_pem_to_jwk(km.load_public_key_from_pem())
-#     return public_key_jwk
+@router.get("/public-key")
+async def show_public_key():
+    public_key_jwk = JWK.from_key(skm.load_public_key_from_pem())
+    return public_key_jwk

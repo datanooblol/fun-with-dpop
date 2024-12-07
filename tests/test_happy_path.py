@@ -1,11 +1,12 @@
 import time
 from tests.conftest import sign_signature
+import uuid
 
 def test_happy_path(client, client_keys):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
-        jti="555",
+        jti=str(uuid.uuid4()),
         iat=int(time.time()),
         exp=iat+15,
         htm="GET",

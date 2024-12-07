@@ -3,6 +3,7 @@ import time
 from package.jwt_management.data_models.client_models import ClientHeaders, ClientClaims, ClientSignature
 from package.jwt_management.data_models.base_models import JWK
 from tests.conftest import sign_signature
+import uuid
 
 @pytest.mark.parametrize(
         'scenario',
@@ -12,13 +13,13 @@ from tests.conftest import sign_signature
             ('jwk'),
         ]
 )
-def test_validate_client_missing_headers(
+def test_headers_missing(
     client, client_keys, scenario
 ):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
-        jti="555",
+        jti=str(uuid.uuid4()),
         iat=iat,
         exp=iat+15,
         htm="GET",
@@ -41,14 +42,14 @@ def test_validate_client_missing_headers(
             ('alg', "dpop+jwt", "H256") # H256 is symetric algorithm, DPoP uses only R256
         ]
 )
-def test_validate_client_value_invalid_headers(
+def test_headers_invalid(
     client, client_keys, scenario, typ, alg
 ):
     iat = int(time.time())
     c_sig = ClientSignature(
         headers=ClientHeaders(typ=typ, alg=alg, jwk=JWK.from_key(key=client_keys.load_public_key_from_pem())),
         claims=ClientClaims(
-            jti="555",
+            jti=str(uuid.uuid4()),
             iat=iat,
             exp=iat+15,
             htm="GET",

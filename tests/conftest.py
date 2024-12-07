@@ -13,6 +13,11 @@ def client_keys():
     from package.keypair_management import KeyPairManagement
     return KeyPairManagement(directory='./client_keypair')
 
+@pytest.fixture
+def server_keys():
+    from package.keypair_management import KeyPairManagement
+    return KeyPairManagement(directory='./server_keypair')
+
 def sign_signature(client_keys, jti, iat, exp, htm, htu, client_id):
     c_sig = ClientSignature(
         headers=ClientHeaders(typ="dpop+jwt", alg="RS256", jwk=JWK.from_key(key=client_keys.load_public_key_from_pem())),
