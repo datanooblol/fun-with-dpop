@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from package.ezorm.crud import Create, Read
 from package.routes import AuthorizerRouter, ResourceRouter
 from package.ezorm.configuration import settings
 from package.ezorm.engine import duck_engine
@@ -10,6 +11,7 @@ settings.configure(engine=duck_engine)
 tables = [DPoPModel, AccessTokenModel, RefreshTokenModel, UserModel, CodeModel]
 delete_tables(tables)
 create_tables(tables)
+Create(UserModel(client_id="testclientid", username="testusername", password="testpassword"))
 
 app = FastAPI()
 
