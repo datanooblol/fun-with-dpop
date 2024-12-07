@@ -21,6 +21,6 @@ def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes, ACC
     return {
         "access_token": access_token,
         "token_type": "DPoP",
-        "exp": iat+ACCESS_TOKEN_LIVE,
+        "expires_in": ACCESS_TOKEN_LIVE,
         "refresh_token": refresh_token
     }

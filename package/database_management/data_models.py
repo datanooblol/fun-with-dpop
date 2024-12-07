@@ -1,7 +1,7 @@
 from package.ezorm.variables import EzORM
 from pydantic import Field
 from typing import Optional
-
+from pydantic import BaseModel, Field
 class DPoPModel(EzORM):
     jti:str = Field(description="your unique jti", default=None)
 
@@ -15,3 +15,24 @@ class AccessTokenModel(DPoPModel):
 class RefreshTokenModel(AccessTokenModel):
     refresh_token:str = Field(description="expiration varied from token type", default=None)
     exp:int = Field(description="expiration on access token should be at least a day", default=None)
+
+class UserModel(EzORM):
+    client_id:str = Field(description="auto generated at /register", default=None)
+    username:str = Field(description="username at /register", default=None)
+    password:str = Field(description="password at /register", default=None)
+
+class CodeModel(EzORM):
+    client_id:str = Field(description="client_id got it after login", default=None)
+    code_challenge:str = Field(description="code_challenge will be used to validate the code_verify, so we know they come from the same user", default=None)
+    code:str = Field(description="this code is a server generated, store only at /login and use it to validate in /token", default=None)
+
+class RegisterFormat(BaseModel):
+    username:str = Field(description="a username")
+    password:str = Field(description="a password")
+
+class LoginFormat(RegisterFormat):
+    code_challenge:str = Field(description="a code challenge encoded from code_verify")
+
+class TestModel(EzORM):
+    user:str
+    password:str

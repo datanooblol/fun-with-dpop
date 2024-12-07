@@ -9,15 +9,16 @@ def test_happy_path(client, client_keys):
         jti=str(uuid.uuid4()),
         iat=int(time.time()),
         exp=iat+15,
-        htm="GET",
+        htm="POST",
         htu="/authorizer/token",
         client_id="555"
     )
     headers = {"DPoP": signature}
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     response_dict = response.json()
     assert response.status_code == 200
     assert response_dict['token_type'] == 'DPoP'
     assert "access_token" in response_dict
     assert "refresh_token" in response_dict
-    assert "exp" in response_dict
+    assert "expires_in" in response_dict

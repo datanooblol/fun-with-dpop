@@ -6,7 +6,8 @@ def test_dpop_missing(
     client, 
 ):
     headers = {}
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
 
     assert response.status_code == 400
     assert response.json() == {"detail": "DPoP missing from request headers."}
@@ -25,7 +26,7 @@ def test_verify_client_signature(client, client_keys, scenario, exp):
         jti=str(uuid.uuid4()),
         iat=iat,
         exp=iat+exp,
-        htm="GET",
+        htm="POST",
         htu="/authorizer/token",
         client_id="555"
     )
@@ -38,7 +39,7 @@ def test_verify_client_signature(client, client_keys, scenario, exp):
             jti=str(uuid.uuid4()),
             iat=iat,
             exp=iat+exp,
-            htm="GET",
+            htm="POST",
             htu="/authorizer/token",
             client_id="555"
         )
@@ -52,6 +53,7 @@ def test_verify_client_signature(client, client_keys, scenario, exp):
         "DPoP": signature
     }
     
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == status_code
     assert response.json() == expected_response

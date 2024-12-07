@@ -6,10 +6,9 @@ import uuid
 @pytest.mark.parametrize(
         'scenario, htm, htu',
         [
-            # ('happy', 'GET', '/authorizer/token'),
-            ('htm_mismatched', 'POST', '/authorizer/token'),
-            ('htu_mismatched', 'GET', '/authorizer/token1'),
-            ('htm_htu_mismatched', 'POST', '/authorizer/token1'),
+            ('htm_mismatched', 'GET', '/authorizer/token'),
+            ('htu_mismatched', 'POST', '/authorizer/token1'),
+            ('htm_htu_mismatched', 'GET', '/authorizer/token1'),
         ]
 )
 def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
@@ -26,7 +25,8 @@ def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
     headers = {
         "DPoP": signature
     }
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
 
     if scenario == 'htu_mismatched':
         status_code = 400
@@ -64,7 +64,7 @@ def test_claims_missing(
         jti=str(uuid.uuid4()) if jti==True else None,
         iat=_iat if iat==True else None,
         exp=_iat+15 if exp==True else None,
-        htm="GET" if htm==True else None,
+        htm="POST" if htm==True else None,
         htu="/authorizer/token" if htu==True else None,
         client_id="555" if client_id==True else None
     )
@@ -72,7 +72,8 @@ def test_claims_missing(
     headers = {
         "DPoP": signature
     }
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     
     status_code = 400
     expected_response = {"detail": f"Unexpected error: {scenario} is missing from DPoP claims."}

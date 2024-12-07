@@ -1,12 +1,21 @@
+import uuid
 from fastapi import APIRouter
 from fastapi import Depends
+from pydantic import BaseModel, Field
+from fastapi import HTTPException
 # from package.jwt_management import ServerJWTManagement, JWTValidation
 # from package.routes.utils import get_jwt_management, extract_dpop_proof, validate_claims, DPoPFormat, validate_refresh_token, get_tokens
+from package.ezorm.variables import EzORM
 from package.validation.dpop_validation import validate_dop_request
 from package.jwt_management.data_models.client_models import ClientSignature
 from package.routes.authorizer.utils import server_generate_tokens
 from package import skm
 from package.jwt_management.data_models.base_models import JWK
+from fastapi.responses import JSONResponse
+from package.ezorm.crud import Read, Create, Update
+from package.database_management.data_models import CodeModel, LoginFormat, RegisterFormat, TestModel, UserModel
+from package.validation.login_validation import validate_login_request
+from package.validation.register_validation import validate_register_request
 
 skm.generate_keypairs()
 
@@ -22,11 +31,11 @@ router = APIRouter(
 # jwtv = JWTValidation()
 # server = ServerJWTManagement()
 
-@router.get("/token")
+@router.post("/token")
 async def get_token(
     dpop:ClientSignature=Depends(validate_dop_request)
 ):  
-    dpop.claims.validate_method_endpoint(method="GET", endpoint="/authorizer/token")
+    dpop.claims.validate_method_endpoint(method="POST", endpoint="/authorizer/token")
     client_public_thumbprint = dpop.headers.jwk.to_thumbprint()
     client_id = dpop.claims.client_id
     return server_generate_tokens(
@@ -36,7 +45,22 @@ async def get_token(
         ACCESS_TOKEN_LIVE=ACCESS_TOKEN_LIVE, 
         REFRESH_TOKEN_LIVE=REFRESH_TOKEN_LIVE
     )
+
+@router.post("/login")
+async def post_login(code:CodeModel=Depends(validate_login_request)):
+    """simulate login behavior"""
     
+    return JSONResponse({"code": code.code})
+
+@router.post("/register")
+async def post_register_user(user:RegisterFormat=Depends(validate_register_request)):
+    new_user = UserModel(client_id=str(uuid.uuid4()), username=user.username, password=user.password)
+    Create(new_user)
+    return {"response": f"User '{new_user.username}' registered successfully"}
+
+@router.post("/test")
+async def post_test(test:TestModel):
+    return {"response": "test"}
 # @router.get("/token")
 # async def get_token(
 #     dpop:DPoPFormat = Depends(extract_dpop_proof)

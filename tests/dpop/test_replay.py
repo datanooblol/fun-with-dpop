@@ -9,14 +9,15 @@ def test_replay(client, client_keys):
         jti=jti,
         iat=iat,
         exp=iat+15,
-        htm="GET",
+        htm="POST",
         htu="/authorizer/token",
         client_id="555",
 
     )
     headers = {"DPoP": signature}
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     headers = {"DPoP": signature}
-    response = client.get("/authorizer/token", headers=headers)
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == 401
     assert response.json() == {"detail": "Security breach: DPoP replayed."}

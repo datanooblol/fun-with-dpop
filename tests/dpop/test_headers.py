@@ -22,7 +22,7 @@ def test_headers_missing(
         jti=str(uuid.uuid4()),
         iat=iat,
         exp=iat+15,
-        htm="GET",
+        htm="POST",
         htu="/authorizer/token",
         client_id="555"
     )
@@ -31,7 +31,8 @@ def test_headers_missing(
     c_sig.headers = ClientHeaders(**headers)
     signature = c_sig.sign(key=client_keys.load_private_key_from_pem())
     headers = {"DPoP": signature}
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == 400
     assert response.json() == {"detail": f"Unexpected error: {scenario} is missing from DPoP headers."}
 
@@ -52,13 +53,14 @@ def test_headers_invalid(
             jti=str(uuid.uuid4()),
             iat=iat,
             exp=iat+15,
-            htm="GET",
+            htm="POST",
             htu="/authorizer/token",
             client_id="555"
         )
     )
     signature = c_sig.sign(key=client_keys.load_private_key_from_pem())
     headers = {"DPoP":signature}
-    response = client.get("/authorizer/token", headers=headers)
+    payload = {}
+    response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == 400
     assert response.json() == {"detail": f"Unexpected error: headers '{scenario}' was invalid."}
