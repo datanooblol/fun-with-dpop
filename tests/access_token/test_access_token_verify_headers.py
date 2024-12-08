@@ -23,7 +23,7 @@ def test_headers(client, client_keys, server_keys, scenario):
         REFRESH_TOKEN_LIVE=0
     )
     access_token = tokens["access_token"]
-    headers = {}
+    headers = {"DPoP": ""}
     if scenario=='invalid missing':
         error_message = "Invalid headers: Authorization missing."
     if scenario=='invalid format':

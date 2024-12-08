@@ -10,17 +10,7 @@ import time
 import uuid
 from package.keypair_management import KeyPairManagement
 
-# def get_db() -> Generator:
-#     return EzCrud(engine=duckdb, database="./db/test.db")
-
-# @pytest.fixture
-# def client():
-#     from fastapi.testclient import TestClient
-#     from main import app
-#     return TestClient(app)
-
-# @pytest.fixture
-def mock_db() -> Generator:
+def mock_db() -> EzCrud:
     return EzCrud(engine=duckdb, database="./db/test.db")
 
 # Create a test client for FastAPI
@@ -29,8 +19,6 @@ def client():
     from fastapi.testclient import TestClient
     from main import app
     from package.utils import get_db
-    # def override_get_db():
-    #     yield db
 
     app.dependency_overrides[get_db] = mock_db
     with TestClient(app) as client:

@@ -1,7 +1,9 @@
+from typing import Union
 from fastapi import Body, Request, HTTPException
 from pydantic import BaseModel
 from package.database_management.data_models import RefreshTokenModel
 from package.ezorm.crud import Read
+from package.ezorm.ezcrud import EzCrud
 from package.jwt_management.data_models.server_models import ServerSignature
 from package import skm
 from package.routes.utils import get_server_public_key
@@ -25,19 +27,19 @@ class RefreshTokenBody(BaseModel):
     client_id:str
     refresh_token:str
 
-def validate_refresh_token_body(body:RefreshTokenBody=Body(...))->bool:
+def validate_refresh_token_body(body:RefreshTokenBody, db:EzCrud)->bool:
     if body.grant_type!="refresh_token":
         raise HTTPException(status_code=400, detail=f"Invalid grant_type.")
     if body.refresh_token is None:
         raise HTTPException(status_code=400, detail=f"refresh_token missing.")
     if body.client_id is None:
         raise HTTPException(status_code=400, detail=f"client_id missing.")
-    record = Read(RefreshTokenModel(client_id=body.client_id))
+    record = db.Read(RefreshTokenModel(client_id=body.client_id))
     if record.shape[0]==0:
         raise HTTPException(status_code=400, detail=f"client_id not found.")
 
-def verify_refresh_token(body:RefreshTokenBody=Body(...))->bool:
+def verify_refresh_token(token:str)->Union[ServerSignature | HTTPException]:
     public_key_dict = get_server_public_key()
     public_key_pem = convert_jwk_to_public_key_pem(public_key_dict)
-    ServerSignature.verify_signature(signature=body.refresh_token, key=public_key_pem)
-    return True
+    return ServerSignature.verify_signature(signature=token, 
+        key=public_key_pem)

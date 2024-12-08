@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from jose import jwt
+from jose import ExpiredSignatureError, jwt
 from package.jwt_management.data_models.base_models import JWK
 from fastapi import HTTPException
 
@@ -45,8 +45,12 @@ class ServerSignature(BaseModel):
             decoded = jwt.decode(
                 token=signature,
                 key=key,
-                algorithms=ALGORITHM
+                algorithms=ALGORITHM,
+                options={
+                    "verify_exp":False
+                }
             )
             return cls(**decoded)
+        
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Unexpected error: {e}")
+            return HTTPException(status_code=400, detail=f"Unexpected error: {e}")

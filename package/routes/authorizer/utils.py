@@ -7,9 +7,11 @@ import random
 import string
 import os
 
-def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes, ACCESS_TOKEN_LIVE:int, REFRESH_TOKEN_LIVE:int):
-    jti = str(uuid.uuid4())
-    iat = int(time.time())
+def server_generate_tokens(client_id:str, thumbprint:str, private_key:bytes, ACCESS_TOKEN_LIVE:int, REFRESH_TOKEN_LIVE:int, jti:str=None, iat:int=None):
+    if jti is None:
+        jti = str(uuid.uuid4())
+    if iat is None:
+        iat = int(time.time())
     access_token = ServerSignature(
         jti=jti, 
         iat=iat, 

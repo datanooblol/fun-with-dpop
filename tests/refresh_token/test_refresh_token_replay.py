@@ -5,7 +5,7 @@ from package.jwt_management.data_models.base_models import JWK
 from package.routes.authorizer.utils import server_generate_tokens
 from tests.conftest import get_dpop_data, mock_db
 
-def test_replayed(client, client_keys, server_keys, get_test_user):
+def test_replayed(client, client_keys, server_keys, get_test_user, get_payload_for_endpoint_refresh):
     """Replay means jti and access token in inactive records show up.
     Step:
         - verify access token, then get jti and access token and client_id
@@ -14,13 +14,13 @@ def test_replayed(client, client_keys, server_keys, get_test_user):
         - if exist and inactive, update remark to replay
     """
     db = mock_db()
-    c_sig, signature = get_dpop_data(htm="GET", htu="/resource/protected")
+    c_sig, signature = get_dpop_data(htm="POST", htu="/authorizer/refresh")
     thumbprint = JWK.from_key(key=client_keys.load_public_key_from_pem()).to_thumbprint()
     client_id = get_test_user.get("client_id", None)
     jti = str(uuid.uuid4())
     iat = int(time.time())
-    ACCESS_TOKEN_LIVE=-1
-    REFRESH_TOKEN_LIVE=60*60*24
+    ACCESS_TOKEN_LIVE=60*10
+    REFRESH_TOKEN_LIVE=-1
     tokens = server_generate_tokens(
         jti=jti,
         iat=iat,
@@ -36,9 +36,11 @@ def test_replayed(client, client_keys, server_keys, get_test_user):
     db.Create(AccessTokenModel(access_token=access_token, jti=jti, client_id=client_id, exp=iat+ACCESS_TOKEN_LIVE, active=False, remark="expired"))
     db.Create(RefreshTokenModel(refresh_token=refresh_token, access_token=access_token, jti=jti, client_id=client_id, exp=iat+REFRESH_TOKEN_LIVE, active=True))
     headers = {
-        "Authorization": f"DPoP {access_token}",
+        # "Authorization": f"DPoP {access_token}",
         "DPoP": signature
     }
-    response = client.get("/resource/protected", headers=headers)
-    assert response.status_code == 401
-    assert response.json() == {"detail": "Access token replayed."}
+    payload = get_payload_for_endpoint_refresh
+    payload.update({"refresh_token": refresh_token})
+    response = client.post("/authorizer/refresh", headers=headers, json=payload)
+    assert response.status_code == 403
+    assert response.json() == {'detail': 'Unexpected error: refresh token expired.'}
