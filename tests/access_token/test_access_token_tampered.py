@@ -7,7 +7,7 @@ def test_tampered(
         client_keys, 
         server_keys,
         get_test_user,
-        get_client_id,
+        # get_client_id,
         get_code,
         get_login_data
 ):
@@ -29,16 +29,17 @@ def test_tampered(
     headers = {
         "DPoP": signature,
     }
+    client_id = get_test_user.pop("client_id")
     payload = {
         "grant_type": "authorization_code", # for /authorizer/refresh -> literal "refresh_token"
-        "client_id": get_client_id, # for /authorizer/refresh
+        "client_id": client_id, # for /authorizer/refresh
         "code": code,
         # "redirect_uri": "", # not use
         "code_verifier": get_code["code_verifier"],
         # "refresh_token": "", # for /authorizer/refresh
     }
     response = client.post("/authorizer/token", headers=headers, json=payload)
-    access_token = response.json().get("access_token", None)
+    access_token = response.json().get('access_token', None)
     
     c_sig, signature = get_dpop_data(htm="GET", htu="/resource/protected")
 
@@ -49,7 +50,8 @@ def test_tampered(
         private_key=server_keys.load_private_key_from_pem(),
         ACCESS_TOKEN_LIVE=60*60, 
         REFRESH_TOKEN_LIVE=60*60*24
-    ).get("access_token", None)
+    )
+    tampered_access_token = tampered_access_token['access_token']
     h, _, s = access_token.split(".")
     _, c, _ = tampered_access_token.split(".")
     tampered = ".".join([h,c,s])

@@ -1,5 +1,5 @@
 import copy
-from package.ezorm.engine import duck_engine
+# from package.ezorm.engine import duck_engine
 
 # This class comes from DSPY: https://github.com/stanfordnlp/dspy/blob/main/dsp/utils/utils.py
 
@@ -51,7 +51,7 @@ class Settings:
             cls._instance.stack_by_thread[threading.get_ident()] = cls._instance.main_stack
 
             config = dotdict(
-                engine=duck_engine,
+                engine=None,
                 database="./db/ezorm.db",
             )
             cls._instance.__append(config)

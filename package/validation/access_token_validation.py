@@ -44,6 +44,6 @@ def validate_access_token_body(body:AccessTokenBody=Body(...))->bool:
     if body.client_id is None:
         raise HTTPException(status_code=400, detail=f"client_id missing.")
     
-    record = Read(AccessTokenModel(client_id=body.client_id))
-    if record.shape[0]==0:
-        raise HTTPException(status_code=400, detail=f"client_id not found.")
+    # record = Read(AccessTokenModel(client_id=body.client_id))
+    # if record.shape[0]==0:
+    #     raise HTTPException(status_code=400, detail=f"client_id not found.")

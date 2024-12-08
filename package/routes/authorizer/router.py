@@ -1,9 +1,11 @@
 import uuid
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from fastapi import Depends
 # from package.jwt_management import ServerJWTManagement, JWTValidation
 # from package.routes.utils import get_jwt_management, extract_dpop_proof, validate_claims, DPoPFormat, validate_refresh_token, get_tokens
+from package.ezorm.ezcrud import EzCrud
 from package.ezorm.variables import EzORM
+from package.utils import get_db
 from package.validation.access_token_validation import AccessTokenBody, validate_access_token_body
 from package.validation.dpop_validation import validate_dop_request
 from package.jwt_management.data_models.client_models import ClientSignature
@@ -12,7 +14,7 @@ from package import skm
 from package.jwt_management.data_models.base_models import JWK
 from fastapi.responses import JSONResponse
 from package.ezorm.crud import Read, Create, Update
-from package.database_management.data_models import CodeModel, RegisterFormat, TestModel, UserModel
+from package.database_management.data_models import CodeModel, LoginFormat, RegisterFormat, TestModel, UserModel
 from package.validation.login_validation import validate_login_request
 from package.validation.refresh_token_validation import RefreshTokenBody, validate_refresh_token_body, verify_refresh_token
 from package.validation.register_validation import validate_register_request
@@ -47,17 +49,32 @@ async def get_token(
         REFRESH_TOKEN_LIVE=REFRESH_TOKEN_LIVE
     )
 
-@router.post("/login")
-async def post_login(code:CodeModel=Depends(validate_login_request)):
-    """simulate login behavior"""
+# @router.post("/login")
+# async def post_login(code:CodeModel=Depends(validate_login_request)):
+#     """simulate login behavior"""
     
+#     return JSONResponse({"code": code.code})
+
+@router.post("/login")
+async def post_login(user:LoginFormat=Body(...), db:EzCrud=Depends(get_db)):
+    """simulate login behavior"""
+    code:CodeModel = validate_login_request(user, db)
     return JSONResponse({"code": code.code})
+    
+
+# @router.post("/register")
+# async def post_register_user(user:RegisterFormat=Depends(validate_register_request)):
+#     new_user = UserModel(client_id=str(uuid.uuid4()), username=user.username, password=user.password)
+#     Create(new_user)
+#     return {"response": f"User '{new_user.username}' registered successfully"}
 
 @router.post("/register")
-async def post_register_user(user:RegisterFormat=Depends(validate_register_request)):
+async def post_register_user(user:RegisterFormat=Body(...), db=Depends(get_db)):
+    user = validate_register_request(user, db)
     new_user = UserModel(client_id=str(uuid.uuid4()), username=user.username, password=user.password)
-    Create(new_user)
+    db.Create(new_user)
     return {"response": f"User '{new_user.username}' registered successfully"}
+
 
 @router.post("/test")
 async def post_test(test:TestModel):

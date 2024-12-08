@@ -14,7 +14,7 @@ import uuid
         ]
 )
 def test_headers_missing(
-    client, client_keys, scenario
+    client, client_keys, scenario, get_payload_for_endpoint_token
 ):
     iat = int(time.time())
     c_sig, signature = sign_signature(
@@ -31,7 +31,7 @@ def test_headers_missing(
     c_sig.headers = ClientHeaders(**headers)
     signature = c_sig.sign(key=client_keys.load_private_key_from_pem())
     headers = {"DPoP": signature}
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == 400
     assert response.json() == {"detail": f"Unexpected error: {scenario} is missing from DPoP headers."}

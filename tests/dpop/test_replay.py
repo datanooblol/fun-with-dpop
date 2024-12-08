@@ -1,7 +1,7 @@
 from tests.conftest import sign_signature
 import time
 
-def test_replay(client, client_keys):
+def test_replay(client, client_keys, get_payload_for_endpoint_token):
     jti = "testreplay"
     iat = int(time.time())
     c_sig, signature = sign_signature(
@@ -15,7 +15,7 @@ def test_replay(client, client_keys):
 
     )
     headers = {"DPoP": signature}
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
     headers = {"DPoP": signature}
     response = client.post("/authorizer/token", headers=headers, json=payload)

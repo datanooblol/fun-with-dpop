@@ -2,7 +2,7 @@ import time
 from tests.conftest import sign_signature
 import uuid
 
-def test_happy_path(client, client_keys):
+def test_happy_path(client, client_keys, get_payload_for_endpoint_token):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
@@ -14,7 +14,7 @@ def test_happy_path(client, client_keys):
         client_id="555"
     )
     headers = {"DPoP": signature}
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
     response_dict = response.json()
     assert response.status_code == 200

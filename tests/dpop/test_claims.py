@@ -11,7 +11,7 @@ import uuid
             ('htm_htu_mismatched', 'GET', '/authorizer/token1'),
         ]
 )
-def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
+def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu, get_payload_for_endpoint_token):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
@@ -25,7 +25,7 @@ def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
     headers = {
         "DPoP": signature
     }
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
 
     if scenario == 'htu_mismatched':
@@ -55,10 +55,9 @@ def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu):
 )
 def test_claims_missing(
     client, client_keys,
-    scenario, jti, iat, exp, htm, htu, client_id
+    scenario, jti, iat, exp, htm, htu, client_id, get_payload_for_endpoint_token
 ):
     _iat = int(time.time())
-    
     c_sig, signature = sign_signature(
         client_keys=client_keys,
         jti=str(uuid.uuid4()) if jti==True else None,
@@ -72,7 +71,7 @@ def test_claims_missing(
     headers = {
         "DPoP": signature
     }
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
     
     status_code = 400

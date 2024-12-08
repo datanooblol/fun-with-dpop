@@ -1,5 +1,6 @@
 from package.database_management.data_models import CodeModel, UserModel
 from package.ezorm.crud import Create, Delete
+from tests.conftest import mock_db
 
 
 def test_login_happy(client, get_test_user, get_code):
@@ -45,12 +46,13 @@ def test_login_user_not_found(client, get_test_user):
     assert response.json() == {"detail": f"User '{payload['username']}' not found."}
 
 def test_client_id_duplicate(client, get_test_user, get_code):
+    db = mock_db()
     headers = {}
     payload = get_test_user
     payload["code_challenge"] = get_code.get("code_challenge", None)
     code_record = CodeModel(client_id="testclientid", code="testcodeduplicate", code_challenge="testcodechallengeduplicate")
-    Create(code_record)
+    db.Create(code_record)
     response = client.post("/authorizer/login", headers=headers, json=payload)
     assert response.status_code == 400
     assert response.json() == {"detail": f"Client duplicated."}
-    Delete(code_record)
+    db.Delete(code_record)

@@ -10,7 +10,7 @@ import uuid
             ('tampered', 15)
         ]
 )
-def test_verify_client_signature(client, client_keys, scenario, exp):
+def test_verify_client_signature(client, client_keys, scenario, exp, get_payload_for_endpoint_token):
     iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
@@ -44,7 +44,7 @@ def test_verify_client_signature(client, client_keys, scenario, exp):
         "DPoP": signature
     }
     
-    payload = {}
+    payload = get_payload_for_endpoint_token
     response = client.post("/authorizer/token", headers=headers, json=payload)
     assert response.status_code == status_code
     assert response.json() == expected_response
