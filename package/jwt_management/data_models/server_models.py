@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
-from jose import ExpiredSignatureError, jwt
+from jose import jwt
 from package.jwt_management.data_models.base_models import JWK
 from fastapi import HTTPException
 
@@ -13,18 +12,6 @@ class JKT(BaseModel):
     def from_key(cls, key:bytes):
         return cls(jkt=JWK.from_key(key).to_thumbprint())
 
-# clear
-# class CNF(BaseModel):
-#     cnf:JKT = Field(description="")
-
-#     @classmethod
-#     def from_key(cls, key:bytes):
-#         return cls(
-#             cnf=JKT(
-#                 jkt=JWK.from_key(key).to_thumbprint()
-#             ).model_dump()
-#         )
-#clear
 class ServerSignature(BaseModel):
     jti:str = Field(description="")
     iat:int = Field(description="")

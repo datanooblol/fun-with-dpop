@@ -69,8 +69,8 @@ def test_tampered(
         "DPoP": signature,
     }
 
-    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE))
-    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE))
+    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE, remark="test_refresh_token_tampered"))
+    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE, remark="test_refresh_token_tampered"))
 
     response = client.post("/authorizer/refresh", headers=headers, json=payload)
     assert response.status_code == 400

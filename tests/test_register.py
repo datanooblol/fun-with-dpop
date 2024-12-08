@@ -1,7 +1,8 @@
-from package.ezorm.crud import Delete
+# from package.ezorm.crud import Delete
 from package.database_management.data_models import UserModel
-
+from tests.conftest import mock_db
 def test_happy_path_register(client, get_test_user):
+    db = mock_db()
     headers = {}
     payload = {
         "username": "testnewuser",
@@ -10,7 +11,7 @@ def test_happy_path_register(client, get_test_user):
     response = client.post("/authorizer/register", headers=headers, json=payload)
     assert response.status_code == 200
     assert response.json() == {"response": f"User '{payload['username']}' registered successfully"}
-    Delete(UserModel(username=payload["username"], password=payload["password"]))
+    db.Delete(UserModel(username=payload["username"], password=payload["password"]))
 
 def test_register_user_exists(client, get_test_user):
     headers = {}

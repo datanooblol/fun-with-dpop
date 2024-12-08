@@ -60,9 +60,10 @@ Error handling:
 - if DPoP.claims in jti, iat, exp, htm, htu, or client_id, reject with status `400` and message Unexpected error: claim is missing from [DPoP claims](#DPoP_claims).  
 - if DPoP.signature cannot be verified, reject with status code `400` and message Unexpected error: Signature verification failed.
 - if body.grant_type is not authorization_code, reject with status `400` and message Invalid grant_type. 
-- if body.code is missing, reject with status `400` and message code missing.  
-- if body.code_verifier is missing, reject with status `400` and message code_virifier missing.  
-- if body.client_id is missing, reject with status `400` and message client_id missing. 
+- if body.code is missing, reject with status `400` and message code missing from request body.  
+- if body.code_verifier is missing, reject with status `400` and message code_virifier missing from request body.  
+- if body.client_id is missing, reject with status `400` and message client_id missing from request body.
+- if body.gran_type is missing, reject with status `400` and message grant_type missing from request body.   
 
 ### POST /refresh  
 This where a user can get a new access_token after the existing one is expired. The user will be redirected here when he or she tries to access `/resource/protected` and got the response status `401` and message `Access token expired.`   
@@ -80,9 +81,8 @@ Response:
 Error handling:  
 - All DPoP.claims' validation is applied the same here.  
 - if body.grant_type is not refresh_token, reject with status code `400` and message Invalid grant_type.
-- if body.refresh_token is missing, reject with status code `400` and message refresh_token missing.  
-- if body.client_id is missing, reject with status code `400` and message client_id missing.  
-- if body.client_id is not found in the server, reject with status code `400` and message client_id not found.  
+- if body.refresh_token is missing, reject with status code `400` and message refresh_token missing from request body.  
+- if body.client_id is missing, reject with status code `400` and message client_id missing from request body.  
 - if refresh_token cannot be verified, reject with status `400` and message Unexpected error: Signature verification failed.  
 - if refresh_token is replayed, reject with status code `403` and message Refresh token replayed.  
 - if refresh_token is expired, reject with status code `403` and message Unexpected error: refresh token expired. Then update refresh_token and relevant access_token records in the database to active equal to False and remark equal to expired. 

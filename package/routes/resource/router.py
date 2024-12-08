@@ -1,6 +1,6 @@
 import time
-from fastapi import APIRouter, Depends, Header, HTTPException
-from package.database_management.data_models import AccessTokenModel
+from fastapi import APIRouter, Depends, HTTPException
+from package.database_management.data_models import AccessTokenModel, DPoPModel
 from package.ezorm.ezcrud import EzCrud
 from package.jwt_management.data_models.client_models import ClientSignature
 from package.utils import get_db
@@ -20,7 +20,11 @@ async def get_history(
     dpop:ClientSignature=Depends(validate_dop_request),
     db:EzCrud=Depends(get_db)
 ):
-    # check if access token is valid
+    # check if DPOP is replayed 
+    record = DPoPModel(jti=dpop.claims.jti)
+    if db.Read(record).shape[0]>0:
+        raise HTTPException(status_code=401, detail="Security breach: DPoP replayed.")
+    db.Create(record)
     result = verify_access_token(token=access_token)
     # if access token is tampered
     if isinstance(result, HTTPException):

@@ -1,5 +1,5 @@
 from typing import Union
-from fastapi import Body, Header, HTTPException, Request
+from fastapi import Body, HTTPException, Request
 from pydantic import BaseModel
 from package.jwt_management.data_models.server_models import ServerSignature
 from package.routes.utils import get_server_public_key
@@ -33,14 +33,15 @@ class AccessTokenBody(BaseModel):
     code:str
     code_verifier:str
 
-def validate_access_token_body(body:AccessTokenBody=Body(...))->Union[AccessTokenBody|HTTPException]:
-    # body = AccessTokenBody(**request.body)
-    if body.grant_type!="authorization_code":
-        return HTTPException(status_code=400, detail=f"Invalid grant_type.")
-    if body.code is None:
-        return HTTPException(status_code=400, detail=f"code missing.")
-    if body.code_verifier is None:
-        return HTTPException(status_code=400, detail=f"code_verifier missing.")
-    if body.client_id is None:
-        return HTTPException(status_code=400, detail=f"client_id missing.")
-    return body
+def validate_access_token_body(body=Body(...))->Union[AccessTokenBody|HTTPException]:
+    if body.get("grant_type", None) is None:
+        raise HTTPException(status_code=400, detail=f"grant_type missing from request body.")
+    if body.get("code", None) is None:
+        raise HTTPException(status_code=400, detail=f"code missing from request body.")
+    if body.get("code_verifier", None) is None:
+        raise HTTPException(status_code=400, detail=f"code_verifier missing from request body.")
+    if body.get("client_id", None) is None:
+        raise HTTPException(status_code=400, detail=f"client_id missing from request body.")
+    if body.get("grant_type")!="authorization_code":
+        raise HTTPException(status_code=400, detail=f"Invalid grant_type.")
+    return AccessTokenBody(**body)

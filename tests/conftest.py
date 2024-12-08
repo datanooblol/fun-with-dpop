@@ -1,4 +1,3 @@
-from typing import Generator
 import duckdb
 from fastapi.testclient import TestClient
 import pytest

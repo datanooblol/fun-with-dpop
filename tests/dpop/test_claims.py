@@ -55,8 +55,9 @@ def test_verify_htm_htu_mismatched(client, client_keys, scenario, htm, htu, get_
 )
 def test_claims_missing(
     client, client_keys,
-    scenario, jti, iat, exp, htm, htu, client_id, get_payload_for_endpoint_token
+    scenario, jti, iat, exp, htm, htu, client_id, get_payload_for_endpoint_token, get_test_user
 ):
+    _client_id = get_test_user.get("client_id", None)
     _iat = int(time.time())
     c_sig, signature = sign_signature(
         client_keys=client_keys,
@@ -65,7 +66,7 @@ def test_claims_missing(
         exp=_iat+15 if exp==True else None,
         htm="POST" if htm==True else None,
         htu="/authorizer/token" if htu==True else None,
-        client_id="555" if client_id==True else None
+        client_id=_client_id if client_id==True else None
     )
 
     headers = {

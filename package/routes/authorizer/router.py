@@ -10,7 +10,7 @@ from package.routes.authorizer.utils import server_generate_tokens
 from package import skm
 from package.jwt_management.data_models.base_models import JWK
 from fastapi.responses import JSONResponse
-from package.database_management.data_models import AccessTokenModel, CodeModel, LoginFormat, RefreshTokenModel, RegisterFormat, TestModel, UserModel
+from package.database_management.data_models import AccessTokenModel, CodeModel, DPoPModel, LoginFormat, RefreshTokenModel, RegisterFormat, TestModel, UserModel
 from package.validation.login_validation import validate_login_request
 from package.validation.refresh_token_validation import RefreshTokenBody, validate_refresh_token_body, verify_refresh_token
 from package.validation.register_validation import validate_register_request
@@ -32,6 +32,11 @@ async def get_token(
     body:AccessTokenBody=Depends(validate_access_token_body),
     db:EzCrud=Depends(get_db)
 ):  
+    # check if DPOP is replayed 
+    record = DPoPModel(jti=dpop.claims.jti)
+    if db.Read(record).shape[0]>0:
+        raise HTTPException(status_code=401, detail="Security breach: DPoP replayed.")
+    db.Create(record)
     # check if htm and htu are valid
     dpop.claims.validate_method_endpoint(method="POST", endpoint="/authorizer/token")
     # check if code, code_verifier, code_challenge are valid
@@ -68,14 +73,16 @@ async def post_test(test:TestModel):
 
 @router.post("/refresh")
 async def post_refresh(
-    body:RefreshTokenBody,
+    body:RefreshTokenBody=Depends(validate_refresh_token_body),
     dpop:ClientSignature=Depends(validate_dop_request),
     db:EzCrud=Depends(get_db)
 ):
+    record = DPoPModel(jti=dpop.claims.jti)
+    if db.Read(record).shape[0]>0:
+        raise HTTPException(status_code=401, detail="Security breach: DPoP replayed.")
+    db.Create(record)
     # check if htm and htu are valid
     dpop.claims.validate_method_endpoint(method="POST", endpoint="/authorizer/refresh")
-    # check body of the post method is valid
-    validate_refresh_token_body(body, db)
     # verify refresh token
     refresh_token = body.refresh_token
     result = verify_refresh_token(refresh_token)

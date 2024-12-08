@@ -1,6 +1,6 @@
 from package.ezorm.utils import remove_escape_characters
 from package.ezorm.utils import create_directory
-from typing import List, Dict, Any, Type, get_args
+from typing import List, Type, get_args
 from package.ezorm.variables import EzORM
 from package.ezorm.validation import issubclass_ezorm
 from package.ezorm.configuration import settings
@@ -21,7 +21,7 @@ def create_tbl_query(table:Type[EzORM])->str:
     for field, detail in table.model_fields.items():
         if field != 'table_name':
             proxy = []
-            # annotation = detail.annotation
+            
             is_optional = 'Optional' in str(detail.annotation)
             if is_optional:
                 dtype, _ = get_args(detail.annotation)
@@ -41,7 +41,6 @@ def create_tbl_query(table:Type[EzORM])->str:
                     elif isinstance(detail.default, str):
                         proxy.append(f"""DEFAULT '{default}'""")
                     else:
-                        # print("default", type(default), default)
                         proxy.append(f"""DEFAULT {default}""")
                         
             query.append(" ".join(proxy))
@@ -79,6 +78,3 @@ def delete_database():
 def list_table():
     query = """SHOW TABLES;"""
     return settings.engine(query, [])
-    # with self.db(self.db_path) as con:
-    #     df = con.execute("""SHOW TABLES;""").df()
-    # return df

@@ -32,8 +32,8 @@ def test_expired(client, client_keys, server_keys, get_test_user):
     refresh_token = tokens["refresh_token"]
     c_sig, signature = get_dpop_data(htm="GET", htu="/resource/protected")
     headers = {"Authorization": f"DPoP {access_token}", "DPoP": f"{signature}"}
-    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE))
-    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE))
+    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE, remark="test_access_token_expire"))
+    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE, remark="test_access_token_expire"))
     response = client.get("/resource/protected", headers=headers)
     assert response.status_code == 401
     assert response.json() == {"detail": "Access token expired."}

@@ -1,7 +1,5 @@
 from fastapi import Request, HTTPException
 from package.jwt_management.data_models.client_models import ClientSignature
-from package.ezorm.crud import Read, Create
-from package.database_management.data_models import DPoPModel
 def validate_dop_request(request: Request):
     """
     Steps on JWT:
@@ -18,11 +16,6 @@ def validate_dop_request(request: Request):
     if dpop_signature is None:
         raise HTTPException(status_code=400, detail="DPoP missing from request headers.")
     dpop = ClientSignature.verify_signature(signature=dpop_signature)
-
-    record = DPoPModel(jti=dpop.claims.jti)
-    if Read(record).shape[0]>0:
-        raise HTTPException(status_code=401, detail="Security breach: DPoP replayed.")
-    Create(record)
     return dpop
 
 

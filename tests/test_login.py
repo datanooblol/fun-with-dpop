@@ -1,5 +1,5 @@
 from package.database_management.data_models import CodeModel, UserModel
-from package.ezorm.crud import Create, Delete
+# from package.ezorm.crud import Create, Delete
 from tests.conftest import mock_db
 
 

@@ -1,7 +1,7 @@
 import pytest
 from package.jwt_management.data_models.base_models import JWK
 from package.routes.authorizer.utils import server_generate_tokens
-from tests.conftest import sign_signature
+# from tests.conftest import sign_signature
 
 @pytest.mark.parametrize(
         'scenario',

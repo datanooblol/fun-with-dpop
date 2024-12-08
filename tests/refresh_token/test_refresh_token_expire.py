@@ -34,8 +34,8 @@ def test_expired(client, client_keys, server_keys, get_test_user, get_payload_fo
 
     headers = {"Authorization": f"DPoP {access_token}", "DPoP": f"{signature}"}
 
-    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE))
-    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE))
+    db.Create(AccessTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, exp=iat+ACCESS_TOKEN_LIVE, remark="test_refresh_token_expire"))
+    db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE, remark="test_refresh_token_expire"))
     
     payload = get_payload_for_endpoint_refresh
     payload.update({"refresh_token": refresh_token})
