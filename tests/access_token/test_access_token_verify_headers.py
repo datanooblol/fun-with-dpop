@@ -30,7 +30,7 @@ def test_headers(client, client_keys, server_keys, scenario):
         headers.update({
             "Authorization": f"Bearer {' '.join(access_token.split('.'))}"
         })
-        error_message = "Invalid headers: Authorization invalid format. Try 'DPoP accesstokenwithoutspace'"
+        error_message = "Invalid headers: Authorization invalid format. Try 'DPoP accesstokenwithoutspace'."
     if scenario=='invalid bearer':
         bearer = "Bearer"
         error_message = f"Invalid headers: Authorization invalid bearer. Try 'DPoP' instead of '{bearer}'."

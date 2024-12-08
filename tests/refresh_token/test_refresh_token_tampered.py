@@ -1,18 +1,22 @@
 import time
 import uuid
+
+from fastapi.testclient import TestClient
 from package.database_management.data_models import AccessTokenModel, RefreshTokenModel
 from package.jwt_management.data_models.base_models import JWK
+from package.keypair_management.base import KeyPairManagement
 from package.routes.authorizer.router import REFRESH_TOKEN_LIVE
+from typing import Any
 from tests.conftest import get_dpop_data, mock_db
 from package.routes.authorizer.utils import server_generate_tokens
 
 def test_tampered(
-        client, 
-        client_keys, 
-        server_keys,
-        get_test_user,
+        client: TestClient, 
+        client_keys: KeyPairManagement, 
+        server_keys: KeyPairManagement,
+        get_test_user: dict[str, str],
         # get_client_id,
-        get_payload_for_endpoint_refresh
+        get_payload_for_endpoint_refresh: dict[str, Any]
 ):
     """
     Steps:
@@ -70,4 +74,4 @@ def test_tampered(
 
     response = client.post("/authorizer/refresh", headers=headers, json=payload)
     assert response.status_code == 400
-    assert response.json() == {'detail': 'Unexpected error: Signature verification failed.'}
+    assert response.json() == {'detail': 'Refresh token tampered.'}

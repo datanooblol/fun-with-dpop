@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from fastapi import HTTPException
 from jose import jwt
 from package.jwt_management.encode_decode import convert_base64url_to_string, convert_jwk_to_public_key_pem
@@ -13,30 +13,14 @@ class BaseClient(BaseModel):
         converted_string = convert_base64url_to_string(partial_signature)
         return cls.model_validate_json(converted_string)
 
-# clear
 class ClientHeaders(BaseClient):
     typ:Optional[str] = Field(description="value must be only 'dpop+jwt'", default=None)
     alg:Optional[str] = Field(description="value must be only 'R256'", default=None)
-    jwk:Optional[JWK] = Field(description="", default=None)
+    jwk:Optional[JWK] = Field(description="user's public key in jwk format", default=None)
     
     @classmethod
     def from_key(cls, key):
         return cls(jwk=JWK.from_key(key))
-
-
-    # @field_validator('alg', mode="before")
-    # def validate_alg(cls, value:str)->str:
-    #     available_algorithm = ["RS256"]
-    #     if value not in available_algorithm:
-    #         raise HTTPException(status_code=400, detail=f"alg must be in {available_algorithm}, instead '{value}")
-    #     return value
-    
-    # @field_validator('typ', mode="before")
-    # def validate_typ(cls, value:str)->str:
-    #     availables = ["dpop+jwt"]
-    #     if value not in availables:
-    #         raise HTTPException(status_code=400, detail=f"typ must be in {availables}, instead '{value}")
-    #     return value
     
     @classmethod
     def verify_dpop_headers(cls, headers:dict):
@@ -49,7 +33,6 @@ class ClientHeaders(BaseClient):
             if (val!=value) and (not isinstance(value, dict)):
                 raise HTTPException(status_code=400, detail=f"Unexpected error: headers '{header}' was invalid.")
             
-
 class ClientClaims(BaseClient):
     jti:Optional[str] = Field(description="", default=None)
     iat:Optional[int] = Field(description="", default=None)
@@ -76,7 +59,6 @@ class ClientClaims(BaseClient):
             if claim_dict.get(claim, None)==None:
                 raise HTTPException(status_code=400, detail=f"Unexpected error: {claim} is missing from DPoP claims.")
 
-#clear
 class ClientSignature(BaseModel):
     headers:ClientHeaders
     claims:ClientClaims

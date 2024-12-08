@@ -34,7 +34,7 @@ def test_replayed(client, client_keys, server_keys, get_test_user, get_payload_f
     refresh_token = tokens["refresh_token"]
     # expires_in = tokens['expires_in']
     db.Create(AccessTokenModel(access_token=access_token, jti=jti, client_id=client_id, exp=iat+ACCESS_TOKEN_LIVE, active=False, remark="expired"))
-    db.Create(RefreshTokenModel(refresh_token=refresh_token, access_token=access_token, jti=jti, client_id=client_id, exp=iat+REFRESH_TOKEN_LIVE, active=True))
+    db.Create(RefreshTokenModel(refresh_token=refresh_token, access_token=access_token, jti=jti, client_id=client_id, exp=iat+REFRESH_TOKEN_LIVE, active=False, remark="expired"))
     headers = {
         # "Authorization": f"DPoP {access_token}",
         "DPoP": signature
@@ -42,5 +42,6 @@ def test_replayed(client, client_keys, server_keys, get_test_user, get_payload_f
     payload = get_payload_for_endpoint_refresh
     payload.update({"refresh_token": refresh_token})
     response = client.post("/authorizer/refresh", headers=headers, json=payload)
+
     assert response.status_code == 403
-    assert response.json() == {'detail': 'Unexpected error: refresh token expired.'}
+    assert response.json() == {'detail': 'Refresh token replayed.'}

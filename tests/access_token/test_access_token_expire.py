@@ -36,4 +36,4 @@ def test_expired(client, client_keys, server_keys, get_test_user):
     db.Create(RefreshTokenModel(client_id=client_id, jti=jti, access_token=access_token, active=True, refresh_token=refresh_token, exp=iat+REFRESH_TOKEN_LIVE))
     response = client.get("/resource/protected", headers=headers)
     assert response.status_code == 401
-    assert response.json() == {"detail": "Unexpected error: access token expired."}
+    assert response.json() == {"detail": "Access token expired."}

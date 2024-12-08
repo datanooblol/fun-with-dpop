@@ -41,4 +41,4 @@ def test_expired(client, client_keys, server_keys, get_test_user, get_payload_fo
     payload.update({"refresh_token": refresh_token})
     response = client.post("/authorizer/refresh", headers=headers, json=payload)
     assert response.status_code == 403
-    assert response.json() == {"detail": "Unexpected error: refresh token expired."}
+    assert response.json() == {"detail": "Refresh token expired."}

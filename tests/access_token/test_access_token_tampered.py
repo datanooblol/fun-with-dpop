@@ -61,4 +61,4 @@ def test_tampered(
     }
     response = client.get("/resource/protected", headers=headers)
     assert response.status_code == 400
-    assert response.json() == {'detail': 'Unexpected error: Signature verification failed.'}
+    assert response.json() == {'detail': 'Access token tampered.'}

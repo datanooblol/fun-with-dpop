@@ -15,7 +15,7 @@ def validate_access_token_headers(request:Request)->Union[str | HTTPException]:
         raise HTTPException(status_code=400, detail=f"Invalid headers: Authorization missing.")
     access_token = access_token.split(" ")
     if len(access_token)>2:
-        raise HTTPException(status_code=400, detail=f"Invalid headers: Authorization invalid format. Try 'DPoP accesstokenwithoutspace'")
+        raise HTTPException(status_code=400, detail=f"Invalid headers: Authorization invalid format. Try 'DPoP accesstokenwithoutspace'.")
     bearer = access_token[0]
     access_token = access_token[-1]
     if bearer.lower() != "dpop":
@@ -23,9 +23,6 @@ def validate_access_token_headers(request:Request)->Union[str | HTTPException]:
     return access_token
 
 def verify_access_token(token:str)->Union[ServerSignature |HTTPException]:
-    # access_token = headers.get("Authorization", None)
-    # access_token = headers.Authorization
-    # access_token = access_token.split(" ")[-1]
     public_key_dict = get_server_public_key()
     public_key_pem = convert_jwk_to_public_key_pem(public_key_dict)
     return ServerSignature.verify_signature(signature=token, key=public_key_pem)
